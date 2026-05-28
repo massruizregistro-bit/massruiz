@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Problemas de Igualación - CEIP Servando Camúñez</title>
+    <!-- Tailwind CSS para diseño fluido y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos específicos para impresión */
+        @media print {
+            body { 
+                background-color: #fff; 
+                color: #000; 
+                font-size: 12pt; 
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            .problem-card {
+                border: none !important;
+                border-bottom: 1px dashed #ccc !important;
+                padding-bottom: 1.5rem !important;
+                margin-bottom: 1.5rem !important;
+                page-break-inside: avoid;
+            }
+            .print-no-answers .solution-box { 
+                display: none !important; 
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- CABECERA DEL COLEGIO (Optimizada para pantalla e impresión) -->
+    <header class="bg-white border-b border-slate-200 py-6 px-4 md:px-8 shadow-sm">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-teal-600 text-white p-3 rounded-xl print:bg-transparent print:text-black">
+                    <i data-lucide="scale" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-950">CEIP Servando Camúñez</h1>
+                    <p class="text-sm text-slate-500 font-medium">Matemáticas · 3.º Ciclo (5.º y 6.º) · Problemas de Igualación</p>
+                </div>
+            </div>
+            <div class="text-right text-xs md:text-sm text-slate-500 print:text-black flex flex-col gap-1 items-end">
+                <span class="font-semibold">Ficha de Trabajo: Igualación Aditiva</span>
+                <div class="flex gap-4 mt-1 print:flex">
+                    <span class="border-b border-slate-300 w-24 inline-block text-left text-slate-400">Alumno/a:</span>
+                    <span class="border-b border-slate-300 w-16 inline-block text-left text-slate-400">Fecha:</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 md:p-8">
+        <!-- PANEL DE CONTROL (Oculto en impresión) -->
+        <section class="no-print bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8 transition-all hover:shadow-md">
+            <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i data-lucide="sliders-horizontal" class="text-teal-600 w-5 h-5"></i>
+                Ajustes del Generador
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Tipo de números -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Datos numéricos</label>
+                    <select id="number-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+                        <option value="integers">Números enteros</option>
+                        <option value="decimals" selected>Números decimales</option>
+                        <option value="mixed">Combinados (Enteros y Decimales)</option>
+                    </select>
+                </div>
+
+                <!-- Enfoque de resolución -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo de Problema</label>
+                    <select id="focus-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+                        <option value="all" selected>Todos los niveles (IG1 a IG6)</option>
+                        <option value="change">Buscar la Igualación / Cambio (IG1-IG2)</option>
+                        <option value="compared">Buscar la Cant. Comparada (IG3-IG4)</option>
+                        <option value="referent">Buscar el Referente (IG5-IG6)</option>
+                    </select>
+                </div>
+
+                <!-- Visibilidad de respuestas -->
+                <div class="flex items-end pb-2">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="show-solutions" class="sr-only peer" checked onchange="toggleSolutionsVisibility()">
+                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                        <span class="ms-3 text-sm font-medium text-slate-700">Ver soluciones</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap gap-4 justify-between items-center">
+                <button onclick="generateProblems()" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Generar 10 Problemas Nuevos
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="printSheet(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center gap-2">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Imprimir sin respuestas
+                    </button>
+                    <button onclick="printSheet(true)" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center gap-2">
+                        <i data-lucide="printer-check" class="w-4 h-4 text-emerald-600"></i> Imprimir con respuestas
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTENEDOR DE PROBLEMAS -->
+        <div id="problems-container" class="space-y-6">
+            <!-- Los problemas se inyectan dinámicamente aquí -->
+        </div>
+
+        <!-- GUÍA PEDAGÓGICA (Oculta en impresión) -->
+        <footer class="no-print mt-12 bg-slate-100 rounded-xl p-5 border border-slate-200 text-xs text-slate-600 space-y-2">
+            <p class="font-bold text-slate-800 text-sm">📋 Clasificación de Problemas de Igualación (IG):</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <span class="font-semibold text-slate-700">IG1 / IG2:</span> Se conocen las dos cantidades estáticas. Se pregunta por la acción correctora (añadir o quitar) sobre el comparado para igualar al referente.
+                </div>
+                <div>
+                    <span class="font-semibold text-slate-700">IG3 / IG4:</span> Se conocen el referente y la acción correctora. Se busca averiguar el valor de la cantidad comparada.
+                </div>
+                <div>
+                    <span class="font-semibold text-slate-700">IG5 / IG6:</span> Se conocen la cantidad comparada y la acción correctora. Se busca el valor de la cantidad referente.
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // Banco de contextos escolares y cotidianos ideales para el alumnado de 5.º y 6.º
+        const contexts = [
+            { ref: "Paula", comp: "Álvaro", item: "puntos acumulados en el torneo de ajedrez", unit: "puntos" },
+            { ref: "La clase de 5.º A", comp: "la clase de 6.º B", item: "kilogramos de tapones recogidos para la campaña solidaria", unit: "kg" },
+            { ref: "El huerto de la cooperativa", comp: "nuestro huerto escolar", item: "litros de agua acumulados en el aljibe", unit: "litros" },
+            { ref: "La biblioteca municipal", comp: "la biblioteca del colegio", item: "libros de misterio en catálogo", unit: "libros" },
+            { ref: "Un patinete eléctrico de gama media", comp: "una bicicleta de montaña infantil", item: "euros de precio", unit: "euros" },
+            { ref: "El corredor de relevos de sexto", comp: "el corredor de quinto de Primaria", item: "segundos de marca personal", unit: "segundos" },
+            { ref: "El bote de pintura para el decorado", comp: "la bandeja para las mezclas", item: "mililitros de pintura acrílica", unit: "ml" },
+            { ref: "El álbum de cromos de Natalia", comp: "el álbum de cromos de su hermano Hugo", item: "cromos de la liga de fútbol", unit: "cromos" }
+        ];
+
+        function round(n) { return Math.round(n * 100) / 100; }
+
+        // Generador de números lógicos (Valores mayores, menores y su diferencia)
+        function getNums(type) {
+            const isDec = type === 'decimals' || (type === 'mixed' && Math.random() > 0.5);
+            const valLarge = isDec ? round(Math.random() * 150 + 60) : Math.floor(Math.random() * 150 + 60);
+            const valSmall = isDec ? round(Math.random() * 50 + 10) : Math.floor(Math.random() * 50 + 10);
+            
+            // Aseguramos que el referente/comparado siempre tengan un valor neto coherente y que la diferencia no sea negativa
+            const diff = round(valLarge - valSmall);
+            return { valLarge, valSmall, diff };
+        }
+
+        // Función para renderizar los problemas
+        function generateProblems() {
+            const numType = document.getElementById("number-type").value;
+            const focus = document.getElementById("focus-type").value;
+            const container = document.getElementById("problems-container");
+            container.innerHTML = "";
+
+            let pool = [];
+            if (focus === "all") pool = ["IG1", "IG2", "IG3", "IG4", "IG5", "IG6"];
+            else if (focus === "change") pool = ["IG1", "IG2"];
+            else if (focus === "compared") pool = ["IG3", "IG4"];
+            else pool = ["IG5", "IG6"];
+
+            const shuffledContexts = [...contexts].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 10; i++) {
+                const ctx = shuffledContexts[i % shuffledContexts.length];
+                const type = pool[Math.floor(Math.random() * pool.length)];
+                const n = getNums(numType);
+                
+                let txt = "", q = "", sol = "", rzn = "";
+
+                // Estructuras semánticas de los problemas de Igualación:
+                // R = Referente (valLarge o valSmall)
+                // C = Comparado (valLarge o valSmall)
+                // D = Diferencia / Acción correctora
+                switch(type) {
+                    case "IG1": // Buscar incremento sobre C para igualar a R (C es menor, R es mayor)
+                        txt = `${ctx.ref} tiene ${n.valLarge} ${ctx.item}. ${ctx.comp} tiene ${n.valSmall} ${ctx.unit}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene que conseguir o añadir ${ctx.comp} para tener los mismos que ${ctx.ref}?`;
+                        sol = `${n.diff} ${ctx.unit}`;
+                        rzn = `Se busca la igualación aditiva directa (IG1). Restamos el comparado menor al referente mayor para hallar la diferencia necesaria: ${n.valLarge} - ${n.valSmall} = ${n.diff} ${ctx.unit}.`;
+                        break;
+
+                    case "IG2": // Buscar decremento sobre C para igualar a R (C es mayor, R es menor)
+                        txt = `${ctx.ref} tiene ${n.valSmall} ${ctx.item}. ${ctx.comp} tiene ${n.valLarge} ${ctx.unit}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene que perder o gastar ${ctx.comp} para tener los mismos que ${ctx.ref}?`;
+                        sol = `${n.diff} ${ctx.unit}`;
+                        rzn = `Se busca la igualación sustractiva directa (IG2). Restamos el referente menor al comparado mayor para hallar la reducción necesaria: ${n.valLarge} - ${n.valSmall} = ${n.diff} ${ctx.unit}.`;
+                        break;
+
+                    case "IG3": // Buscar C conociendo R y que añadiendo D a C se iguala a R (C es menor, R es mayor)
+                        txt = `${ctx.ref} tiene ${n.valLarge} ${ctx.item}. Si a ${ctx.comp} le añadimos o regalamos ${n.diff} ${ctx.unit}, tendrá los mismos que ${ctx.ref}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.comp} en realidad?`;
+                        sol = `${n.valSmall} ${ctx.unit}`;
+                        rzn = `Se busca el comparado (IG3). Si añadiendo una cantidad se iguala al referente, el comparado inicial es menor. Restamos: ${n.valLarge} - ${n.diff} = ${n.valSmall} ${ctx.unit}.`;
+                        break;
+
+                    case "IG4": // Buscar C conociendo R y que quitando D a C se iguala a R (C es mayor, R es menor)
+                        txt = `${ctx.ref} tiene ${n.valSmall} ${ctx.item}. Si a ${ctx.comp} le quitamos o restamos ${n.diff} ${ctx.unit}, tendrá los mismos que ${ctx.ref}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.comp} actualmente?`;
+                        sol = `${n.valLarge} ${ctx.unit}`;
+                        rzn = `Se busca el comparado (IG4). Si quitando una cantidad se iguala al referente, el comparado inicial es mayor. Sumamos: ${n.valSmall} + ${n.diff} = ${n.valLarge} ${ctx.unit}.`;
+                        break;
+
+                    case "IG5": // Buscar R conociendo C y que añadiendo D a C se iguala a R (R es mayor, C es menor)
+                        txt = `${ctx.comp} tiene ${n.valSmall} ${ctx.item}. Si consigue ${n.diff} ${ctx.unit} más, logrará igualar la cantidad que tiene ${ctx.ref}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.ref}?`;
+                        sol = `${n.valLarge} ${ctx.unit}`;
+                        rzn = `Se busca el referente (IG5). Sumamos el comparado y el incremento necesario para llegar a la meta común: ${n.valSmall} + ${n.diff} = ${n.valLarge} ${ctx.unit}.`;
+                        break;
+
+                    case "IG6": // Buscar R conociendo C y que quitando D a C se iguala a R (R es menor, C es mayor)
+                        txt = `${ctx.comp} tiene ${n.valLarge} ${ctx.item}. Si regala o gasta ${n.diff} ${ctx.unit}, se quedará con la misma cantidad que tiene ${ctx.ref}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.ref}?`;
+                        sol = `${n.valSmall} ${ctx.unit}`;
+                        rzn = `Se busca el referente (IG6). Restamos el decremento aplicado del comparado mayor para hallar la meta de igualdad: ${n.valLarge} - ${n.diff} = ${n.valSmall} ${ctx.unit}.`;
+                        break;
+                }
+
+                const card = document.createElement("div");
+                card.className = "problem-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-teal-200 hover:shadow-md";
+                card.innerHTML = `
+                    <div class="flex justify-between mb-3">
+                        <span class="text-teal-700 font-bold text-sm bg-teal-50 px-3 py-1 rounded-lg print:border print:border-black print:bg-transparent print:text-black">
+                            Problema ${i+1}
+                        </span>
+                        <span class="no-print text-[10px] text-slate-400 font-mono bg-slate-100 py-1 px-2 rounded">
+                            Esquema: ${type}
+                        </span>
+                    </div>
+                    <p class="text-slate-800 leading-relaxed text-base mb-4">
+                        ${txt} <strong class="text-slate-950 font-semibold">${q}</strong>
+                    </p>
+                    
+                    <!-- Espacio pautado para la resolución escrita -->
+                    <div class="hidden print:block border border-slate-200 rounded-lg h-24 my-4 relative">
+                        <span class="absolute top-1 left-2 text-[10px] text-slate-400 italic">Espacio para operaciones y razonamiento escolar:</span>
+                        <span class="absolute bottom-1 right-3 text-[10px] text-slate-400">Solución: ____________________</span>
+                    </div>
+
+                    <!-- Solución en pantalla -->
+                    <div class="solution-box p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-sm">
+                        <p class="font-bold text-emerald-900 mb-1 flex items-center gap-1">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                            Resultado: ${sol}
+                        </p>
+                        <p class="text-xs text-emerald-700"><strong>Razonamiento didáctico:</strong> ${rzn}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+            lucide.createIcons();
+            toggleSolutionsVisibility();
+        }
+
+        function toggleSolutionsVisibility() {
+            const show = document.getElementById("show-solutions").checked;
+            document.querySelectorAll(".solution-box").forEach(b => b.classList.toggle("hidden", !show));
+        }
+
+        function printSheet(ans) {
+            document.body.classList.toggle("print-no-answers", !ans);
+            window.print();
+        }
+
+        window.onload = generateProblems;
+    </script>
+</body>
+</html>
