@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Problemas de Comparación - CEIP Servando Camúñez</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            body { background-color: #fff; color: #000; font-size: 12pt; }
+            .no-print { display: none !important; }
+            .problem-card {
+                border: none !important;
+                border-bottom: 1px dashed #ccc !important;
+                padding-bottom: 1.5rem !important;
+                margin-bottom: 1.5rem !important;
+                page-break-inside: avoid;
+            }
+            .print-no-answers .solution-box { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- CABECERA DEL COLEGIO -->
+    <header class="bg-white border-b border-slate-200 py-6 px-4 md:px-8 shadow-sm">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-rose-600 text-white p-3 rounded-xl print:bg-transparent print:text-black">
+                    <i data-lucide="arrow-left-right" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-950">CEIP Servando Camúñez</h1>
+                    <p class="text-sm text-slate-500 font-medium">Matemáticas · 3.º Ciclo (5.º y 6.º) · Problemas de Comparación</p>
+                </div>
+            </div>
+            <div class="text-right text-xs md:text-sm text-slate-500 print:text-black flex flex-col gap-1 items-end">
+                <span class="font-semibold">Ficha de Trabajo: Comparación Aditiva</span>
+                <div class="flex gap-4 mt-1 print:flex">
+                    <span class="border-b border-slate-300 w-24 inline-block text-left text-slate-400">Alumno/a:</span>
+                    <span class="border-b border-slate-300 w-16 inline-block text-left text-slate-400">Fecha:</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 md:p-8">
+        <!-- PANEL DE CONTROL -->
+        <section class="no-print bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8">
+            <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i data-lucide="settings-2" class="text-rose-600 w-5 h-5"></i>
+                Ajustes del Generador
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Datos numéricos</label>
+                    <select id="number-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+                        <option value="integers">Números enteros</option>
+                        <option value="decimals" selected>Números decimales</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo de Problema</label>
+                    <select id="focus-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+                        <option value="all" selected>Todos los niveles (CP1 a CP6)</option>
+                        <option value="comparada">Buscar la Cant. Comparada (CP1-CP2)</option>
+                        <option value="diferencia">Buscar la Diferencia (CP3-CP4)</option>
+                        <option value="referente">Buscar el Referente (CP5-CP6)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-end pb-2">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="show-solutions" class="sr-only peer" checked onchange="toggleSolutionsVisibility()">
+                        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
+                        <span class="ms-3 text-sm font-medium text-slate-700">Ver soluciones</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap gap-4 justify-between items-center">
+                <button onclick="generateProblems()" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Generar 10 Problemas
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="printSheet(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center gap-2">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Sin respuestas
+                    </button>
+                    <button onclick="printSheet(true)" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold py-2.5 px-4 rounded-xl text-sm flex items-center gap-2">
+                        <i data-lucide="printer-check" class="w-4 h-4"></i> Con respuestas
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTENEDOR DE PROBLEMAS -->
+        <div id="problems-container" class="space-y-6"></div>
+
+        <!-- GUÍA RÁPIDA -->
+        <footer class="no-print mt-12 bg-slate-100 rounded-xl p-5 border border-slate-200 text-xs text-slate-600 space-y-2">
+            <p class="font-bold text-slate-800 text-sm">📋 Estructura de Comparación:</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div><strong>CP1/CP2:</strong> Se da el referente y la diferencia. Se busca la cantidad comparada.</div>
+                <div><strong>CP3/CP4:</strong> Se dan ambas cantidades. Se busca la diferencia ("¿Cuántos más/menos tiene?").</div>
+                <div><strong>CP5/CP6:</strong> Se da la cantidad comparada y la diferencia. Se busca el referente (Nivel alto).</div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        const contexts = [
+            { ref: "Paula", comp: "Adrián", item: "puntos en el videojuego", unit: "puntos" },
+            { ref: "La clase de 5ºA", comp: "la clase de 6ºB", item: "kilos de papel reciclado", unit: "kilos" },
+            { ref: "El rascacielos A", comp: "la torre B", item: "metros de altura", unit: "metros" },
+            { ref: "Un ordenador gaming", comp: "una tableta", item: "euros de precio", unit: "euros" },
+            { ref: "El primer equipo", comp: "el segundo equipo", item: "segundos en terminar la carrera", unit: "segundos" },
+            { ref: "La maleta de viaje", comp: "la mochila escolar", item: "gramos de peso", unit: "gramos" },
+            { ref: "El depósito grande", comp: "el bidón pequeño", item: "litros de capacidad", unit: "litros" },
+            { ref: "Nerea", comp: "su hermano Jorge", item: "canicas en su colección", unit: "canicas" }
+        ];
+
+        function round(n) { return Math.round(n * 100) / 100; }
+
+        function getNums(type) {
+            const isDec = type === 'decimals' || (type === 'mixed' && Math.random() > 0.5);
+            const r = isDec ? round(Math.random() * 200 + 50) : Math.floor(Math.random() * 200 + 50);
+            const d = isDec ? round(Math.random() * 40 + 5) : Math.floor(Math.random() * 40 + 5);
+            return { r, d, more: round(r + d), less: round(r - d) };
+        }
+
+        function generateProblems() {
+            const numType = document.getElementById("number-type").value;
+            const focus = document.getElementById("focus-type").value;
+            const container = document.getElementById("problems-container");
+            container.innerHTML = "";
+
+            let pool = [];
+            if(focus === "all") pool = ["CP1","CP2","CP3","CP4","CP5","CP6"];
+            else if(focus === "comparada") pool = ["CP1","CP2"];
+            else if(focus === "diferencia") pool = ["CP3","CP4"];
+            else pool = ["CP5","CP6"];
+
+            const shuffledContexts = [...contexts].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 10; i++) {
+                const ctx = shuffledContexts[i % shuffledContexts.length];
+                const type = pool[Math.floor(Math.random() * pool.length)];
+                const n = getNums(numType);
+                let txt = "", q = "", sol = "", rzn = "";
+
+                switch(type) {
+                    case "CP1": 
+                        txt = `${ctx.ref} tiene ${n.r} ${ctx.item}. ${ctx.comp} tiene ${n.d} ${ctx.unit} más que ${ctx.ref}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.comp}?`;
+                        sol = `${n.more} ${ctx.unit}`;
+                        rzn = `Buscamos la cantidad comparada (superior). Sumamos la referencia y la diferencia: ${n.r} + ${n.d} = ${n.more}.`;
+                        break;
+                    case "CP2":
+                        txt = `${ctx.ref} tiene ${n.r} ${ctx.item}. ${ctx.comp} tiene ${n.d} ${ctx.unit} menos que ${ctx.ref}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.comp}?`;
+                        sol = `${n.less} ${ctx.unit}`;
+                        rzn = `Buscamos la cantidad comparada (inferior). Restamos la diferencia a la referencia: ${n.r} - ${n.d} = ${n.less}.`;
+                        break;
+                    case "CP3":
+                        txt = `${ctx.comp} tiene ${n.more} ${ctx.item} y ${ctx.ref} tiene ${n.r} ${ctx.unit}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.comp} más que ${ctx.ref}?`;
+                        sol = `${n.d} ${ctx.unit}`;
+                        rzn = `Buscamos la diferencia positiva. Restamos la cantidad menor de la mayor: ${n.more} - ${n.r} = ${n.d}.`;
+                        break;
+                    case "CP4":
+                        txt = `${ctx.comp} tiene ${n.less} ${ctx.item} y ${ctx.ref} tiene ${n.r} ${ctx.unit}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.comp} menos que ${ctx.ref}?`;
+                        sol = `${n.d} ${ctx.unit}`;
+                        rzn = `Buscamos la diferencia negativa. Restamos la cantidad menor de la mayor: ${n.r} - ${n.less} = ${n.d}.`;
+                        break;
+                    case "CP5":
+                        txt = `${ctx.comp} tiene ${n.more} ${ctx.item}, lo cual son ${n.d} ${ctx.unit} más de los que tiene ${ctx.ref}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.ref}?`;
+                        sol = `${n.r} ${ctx.unit}`;
+                        rzn = `Buscamos el referente. Si la cantidad conocida es mayor ("más que"), el referente es menor: ${n.more} - ${n.d} = ${n.r}.`;
+                        break;
+                    case "CP6":
+                        txt = `${ctx.comp} tiene ${n.less} ${ctx.item}, lo cual son ${n.d} ${ctx.unit} menos de los que tiene ${ctx.ref}.`;
+                        q = `¿Cuántos ${ctx.unit} tiene ${ctx.ref}?`;
+                        sol = `${n.r} ${ctx.unit}`;
+                        rzn = `Buscamos el referente. Si la cantidad conocida es menor ("menos que"), el referente es mayor: ${n.less} + ${n.d} = ${n.r}.`;
+                        break;
+                }
+
+                const card = document.createElement("div");
+                card.className = "problem-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm";
+                card.innerHTML = `
+                    <div class="flex justify-between mb-3">
+                        <span class="text-rose-700 font-bold text-sm bg-rose-50 px-2 py-1 rounded">Problema ${i+1}</span>
+                        <span class="no-print text-[10px] text-slate-400 font-mono">ID: ${type}</span>
+                    </div>
+                    <p class="text-slate-800 leading-relaxed mb-4">${txt} <strong class="text-black">${q}</strong></p>
+                    <div class="hidden print:block border border-slate-200 rounded-lg h-28 my-4 relative">
+                        <span class="absolute top-1 left-2 text-[10px] text-slate-400 italic">Espacio para razonamiento y operaciones</span>
+                        <span class="absolute bottom-1 right-3 text-[10px] text-slate-400">Solución: ____________________</span>
+                    </div>
+                    <div class="solution-box p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-sm">
+                        <p class="font-bold text-emerald-900 mb-1">Resultado: ${sol}</p>
+                        <p class="text-xs text-emerald-700"><strong>Explicación:</strong> ${rzn}</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+            lucide.createIcons();
+            toggleSolutionsVisibility();
+        }
+
+        function toggleSolutionsVisibility() {
+            const show = document.getElementById("show-solutions").checked;
+            document.querySelectorAll(".solution-box").forEach(b => b.classList.toggle("hidden", !show));
+        }
+
+        function printSheet(ans) {
+            document.body.classList.toggle("print-no-answers", !ans);
+            window.print();
+        }
+
+        window.onload = generateProblems;
+    </script>
+</body>
+</html>
