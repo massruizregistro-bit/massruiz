@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Problemas de Combinación - CEIP Servando Camúñez</title>
+    <!-- Tailwind CSS para estilizado rápido y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide para una interfaz moderna -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos específicos para impresión */
+        @media print {
+            body {
+                background-color: #fff;
+                color: #000;
+                font-size: 12pt;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-header {
+                display: block !important;
+            }
+            .problem-card {
+                border: none !important;
+                border-bottom: 1px dashed #ccc !important;
+                padding-bottom: 1.5rem !important;
+                margin-bottom: 1.5rem !important;
+                page-break-inside: avoid;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+            /* Ocultar respuestas al imprimir por defecto si el usuario lo desea */
+            .print-no-answers .solution-box {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- CABECERA DEL COLEGIO (Visible en pantalla y muy destacada en impresión) -->
+    <header class="bg-white border-b border-slate-200 py-6 px-4 md:px-8 shadow-sm">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-600 text-white p-3 rounded-xl print:bg-transparent print:text-black">
+                    <i data-lucide="layers" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-950">CEIP Servando Camúñez</h1>
+                    <p class="text-sm text-slate-500 font-medium">Departamento de Matemáticas · 3.º Ciclo de Primaria (5.º y 6.º)</p>
+                </div>
+            </div>
+            <div class="text-right text-xs md:text-sm text-slate-500 print:text-black flex flex-col gap-1 items-end">
+                <span class="font-semibold">Ficha de Resolución de Problemas (Combinación)</span>
+                <div class="flex gap-4 mt-1 print:flex">
+                    <span class="border-b border-slate-300 w-24 inline-block text-left text-slate-400">Alumno/a:</span>
+                    <span class="border-b border-slate-300 w-16 inline-block text-left text-slate-400">Fecha:</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- PANEL DE CONTROL / AJUSTES (Oculto al imprimir) -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 md:p-8">
+        <section class="no-print bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8 transition-all hover:shadow-md">
+            <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i data-lucide="sliders" class="text-indigo-600 w-5 h-5"></i>
+                Panel de Configuración (Problemas de Combinación)
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Tipo de datos -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo de Números</label>
+                    <select id="number-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="integers">Solo números enteros (Sencillo)</option>
+                        <option value="decimals" selected>Números decimales (Adecuado 5º/6º)</option>
+                        <option value="mixed">Combinados (Enteros y Decimales)</option>
+                    </select>
+                </div>
+
+                <!-- Enfoque de las preguntas de Combinación -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Preguntar por...</label>
+                    <select id="focus-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="all" selected>Cualquiera (Total o Parte)</option>
+                        <option value="total">La Cantidad Total (Combinación 1)</option>
+                        <option value="part">Una de las Partes (Combinación 2)</option>
+                    </select>
+                </div>
+
+                <!-- Opciones de visualización -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Respuestas / Soluciones</label>
+                    <div class="flex gap-4 mt-2">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="show-solutions" class="sr-only peer" checked onchange="toggleSolutionsVisibility()">
+                            <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            <span class="ms-3 text-sm font-medium text-slate-700">Mostrar soluciones</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap gap-4 justify-between items-center">
+                <button onclick="generateProblems()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Generar 10 Problemas Nuevos
+                </button>
+                
+                <div class="flex gap-2">
+                    <button onclick="printSheet(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 text-sm">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        Imprimir SIN Soluciones
+                    </button>
+                    <button onclick="printSheet(true)" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 text-sm">
+                        <i data-lucide="printer-check" class="w-4 h-4 text-emerald-600"></i>
+                        Imprimir CON Soluciones
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN DE PROBLEMAS -->
+        <div id="problems-container" class="space-y-6">
+            <!-- Los problemas se inyectan dinámicamente aquí -->
+        </div>
+
+        <!-- NOTA PEDAGÓGICA (Oculta al imprimir) -->
+        <footer class="no-print mt-12 bg-slate-100 rounded-xl p-5 border border-slate-200 text-xs text-slate-600 space-y-2">
+            <p class="font-bold text-slate-800 text-sm">💡 Nota Pedagógica para el Aula:</p>
+            <p>Este generador produce problemas aditivos de <strong>Combinación (CO)</strong> basados en la clasificación de Vergnaud:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>Total Desconocido (CO1):</strong> Se conocen las dos partes diferenciadas por una característica física o conceptual. Se busca el todo reunido. Operación: Suma.</li>
+                <li><strong>Parte Desconocida (CO2):</strong> Se conoce el total del conjunto y una de las partes. Se busca la otra parte. Operación: Resta.</li>
+            </ul>
+            <p class="pt-1">Los escenarios combinan contextos cotidianos y escolares ideales para el tercer ciclo, reforzando la comprensión lectora antes de decidir la operación matemática.</p>
+        </footer>
+    </main>
+
+    <script>
+        // Banco de contextos de Combinación (dos partes diferenciadas por una característica)
+        const combinationContexts = [
+            {
+                totalSet: "los balones del almacén de Educación Física",
+                part1_name: "son de baloncesto",
+                part2_name: "son de fútbol",
+                unit: "balones",
+                location: "en el almacén"
+            },
+            {
+                totalSet: "el alumnado de 5.º de Primaria",
+                part1_name: "son alumnos",
+                part2_name: "son alumnas",
+                unit: "escolares",
+                location: "en el patio"
+            },
+            {
+                totalSet: "los ordenadores portátiles del carro digital",
+                part1_name: "están encendidos",
+                part2_name: "están apagados",
+                unit: "ordenadores",
+                location: "en el carro"
+            },
+            {
+                totalSet: "los libros de la biblioteca de aula",
+                part1_name: "son de narrativa y cuentos",
+                part2_name: "son informativos y de consulta",
+                unit: "libros",
+                location: "en las estanterías"
+            },
+            {
+                totalSet: "las plantas aromáticas del huerto escolar",
+                part1_name: "son matas de romero",
+                part2_name: "son matas de lavanda",
+                unit: "plantas",
+                location: "en las jardineras"
+            },
+            {
+                totalSet: "las frutas preparadas para el desayuno escolar",
+                part1_name: "son manzanas rojas",
+                part2_name: "son plátanos de Canarias",
+                unit: "piezas de fruta",
+                location: "en las bandejas del comedor"
+            },
+            {
+                totalSet: "las entradas vendidas para la función de teatro escolar",
+                part1_name: "se vendieron a familiares",
+                part2_name: "se vendieron al profesorado",
+                unit: "entradas",
+                location: "en taquilla"
+            },
+            {
+                totalSet: "los instrumentos musicales del aula de música",
+                part1_name: "son instrumentos de percusión",
+                part2_name: "son instrumentos de viento",
+                unit: "instrumentos",
+                location: "en los armarios"
+            },
+            {
+                totalSet: "el presupuesto destinado a la salida de fin de curso",
+                part1_name: "se gastará en el autobús",
+                part2_name: "se empleará en las entradas del parque de atracciones",
+                unit: "euros",
+                location: "en el presupuesto total"
+            },
+            {
+                totalSet: "los folios disponibles en la copistería del centro",
+                part1_name: "son de color blanco estándar",
+                part2_name: "son de colores variados para manualidades",
+                unit: "folios",
+                location: "en los estantes"
+            }
+        ];
+
+        // Función para redondear correctamente decimales
+        function roundVal(value) {
+            return Math.round(value * 100) / 100;
+        }
+
+        // Generador de números aleatorios coherentes para combinación (Parte + Parte = Total)
+        function generateNumbers(type) {
+            let part1, part2, total;
+            const isDecimal = type === 'decimals' || (type === 'mixed' && Math.random() > 0.5);
+
+            if (isDecimal) {
+                part1 = roundVal(Math.random() * 90 + 10);
+                part2 = roundVal(Math.random() * 90 + 10);
+                total = roundVal(part1 + part2);
+            } else {
+                part1 = Math.floor(Math.random() * 120 + 15);
+                part2 = Math.floor(Math.random() * 120 + 15);
+                total = part1 + part2;
+            }
+
+            return { part1, part2, total };
+        }
+
+        // Construcción de la narrativa del problema según el tipo de combinación
+        function createProblemText(context, nums, typeOfCombination) {
+            let question = "";
+            let contextText = "";
+            let explanation = "";
+
+            if (typeOfCombination === "CO1") { // TOTAL DESCONOCIDO
+                contextText = `En el CEIP Servando Camúñez, analizando ${context.totalSet}, observamos que ${nums.part1} ${context.unit} ${context.part1_name} y ${nums.part2} ${context.unit} ${context.part2_name}.`;
+                question = `¿Cuántos ${context.unit} hay en total ${context.location}?`;
+                explanation = `Operación de combinación aditiva (Total desconocido - CO1). Se calcula sumando las dos partes diferenciadas: ${nums.part1} + ${nums.part2} = ${nums.total} ${context.unit}.`;
+            } else { // PARTE DESCONOCIDA (CO2)
+                // Decidimos aleatoriamente cuál de las dos partes ocultamos
+                const hidePart1 = Math.random() > 0.5;
+
+                if (hidePart1) {
+                    contextText = `En el CEIP Servando Camúñez sabemos que hay un total de ${nums.total} ${context.unit} correspondientes a ${context.totalSet}. Si ${nums.part2} de ellos ${context.part2_name}, y el resto ${context.part1_name}:`;
+                    question = `¿Cuántos ${context.unit} ${context.part1_name} hay exactamente?`;
+                    explanation = `Operación de combinación aditiva (Parte desconocida - CO2). Se calcula restando la parte conocida al total: ${nums.total} - ${nums.part2} = ${nums.part1} ${context.unit}.`;
+                } else {
+                    contextText = `En el CEIP Servando Camúñez sabemos que hay un total de ${nums.total} ${context.unit} correspondientes a ${context.totalSet}. Si ${nums.part1} de ellos ${context.part1_name}, y el resto ${context.part2_name}:`;
+                    question = `¿Cuántos ${context.unit} ${context.part2_name} hay exactamente?`;
+                    explanation = `Operación de combinación aditiva (Parte desconocida - CO2). Se calcula restando la parte conocida al total: ${nums.total} - ${nums.part1} = ${nums.part2} ${context.unit}.`;
+                }
+            }
+
+            return { contextText, question, explanation };
+        }
+
+        // Función principal para generar los 10 problemas
+        function generateProblems() {
+            const numberType = document.getElementById("number-type").value;
+            const focusType = document.getElementById("focus-type").value;
+            const container = document.getElementById("problems-container");
+            
+            container.innerHTML = ""; // Limpiar contenedor
+
+            // Determinar qué tipos de combinación se pueden utilizar
+            let allowedTypes = [];
+            if (focusType === "all") {
+                allowedTypes = ["CO1", "CO2"];
+            } else if (focusType === "total") {
+                allowedTypes = ["CO1"];
+            } else if (focusType === "part") {
+                allowedTypes = ["CO2"];
+            }
+
+            // Barajar los contextos de manera aleatoria para que no se repitan de forma consecutiva
+            const shuffledContexts = [...combinationContexts].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 10; i++) {
+                // Seleccionar un contexto
+                const context = shuffledContexts[i % shuffledContexts.length];
+                
+                // Seleccionar el tipo de combinación
+                const typeOfCombination = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
+                
+                // Generar valores numéricos coherentes
+                const nums = generateNumbers(numberType);
+
+                // Obtener textos adaptados
+                const problemData = createProblemText(context, nums, typeOfCombination);
+
+                // Crear elemento HTML para la tarjeta del problema
+                const problemCard = document.createElement("div");
+                problemCard.className = "problem-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md";
+                
+                // Determinar el resultado esperado
+                let finalAnswer = "";
+                if (typeOfCombination === "CO1") {
+                    finalAnswer = `${nums.total} ${context.unit}`;
+                } else {
+                    // Depende de qué parte se pregunte en la explicación
+                    if (problemData.explanation.includes(`${nums.total} - ${nums.part2}`)) {
+                        finalAnswer = `${nums.part1} ${context.unit}`;
+                    } else {
+                        finalAnswer = `${nums.part2} ${context.unit}`;
+                    }
+                }
+
+                problemCard.innerHTML = `
+                    <div class="flex items-start justify-between gap-4 mb-3">
+                        <span class="bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-lg text-sm print:border print:border-black print:bg-transparent print:text-black">
+                            Problema ${i + 1}
+                        </span>
+                        <span class="no-print text-xs text-slate-400 font-mono bg-slate-100 py-1 px-2 rounded">
+                            Tipo: ${typeOfCombination}
+                        </span>
+                    </div>
+                    <p class="text-slate-800 text-base leading-relaxed font-normal mb-3">
+                        ${problemData.contextText} <strong class="text-slate-950 font-semibold">${problemData.question}</strong>
+                    </p>
+                    
+                    <!-- Espacio en blanco pautado para la resolución manual en impresión -->
+                    <div class="hidden print:block border border-slate-300 rounded-lg h-24 my-4 relative">
+                        <span class="absolute top-1 left-2 text-[10px] text-slate-400">Operaciones / Razonamiento:</span>
+                        <span class="absolute bottom-1 right-2 text-[10px] text-slate-400">Solución: ______________________</span>
+                    </div>
+
+                    <!-- Caja de solución interactiva en pantalla -->
+                    <div class="solution-box mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-950 text-sm transition-all space-y-1">
+                        <p class="font-bold flex items-center gap-1">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                            Solución: ${finalAnswer}
+                        </p>
+                        <p class="text-xs text-emerald-800 font-light leading-relaxed">
+                            <strong>Razonamiento:</strong> ${problemData.explanation}
+                        </p>
+                    </div>
+                `;
+
+                container.appendChild(problemCard);
+            }
+
+            // Inicializar iconos
+            lucide.createIcons();
+            
+            // Ajustar visualización según el estado actual del checkbox de soluciones
+            toggleSolutionsVisibility();
+        }
+
+        // Controlar visibilidad de las soluciones
+        function toggleSolutionsVisibility() {
+            const show = document.getElementById("show-solutions").checked;
+            const solutions = document.querySelectorAll(".solution-box");
+            solutions.forEach(box => {
+                if (show) {
+                    box.classList.remove("hidden");
+                } else {
+                    box.classList.add("hidden");
+                }
+            });
+        }
+
+        // Acción de impresión personalizada
+        function printSheet(includeAnswers) {
+            const body = document.body;
+            if (includeAnswers) {
+                body.classList.remove("print-no-answers");
+            } else {
+                body.classList.add("print-no-answers");
+            }
+            window.print();
+        }
+
+        // Inicializar por primera vez al cargar la página
+        window.onload = function() {
+            generateProblems();
+        }
+    </script>
+</body>
+</html>
