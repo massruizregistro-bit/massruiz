@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Problemas - CEIP Servando Camúñez</title>
+    <!-- Tailwind CSS para estilizado rápido y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide para una interfaz moderna -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilos específicos para impresión */
+        @media print {
+            body {
+                background-color: #fff;
+                color: #000;
+                font-size: 12pt;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-header {
+                display: block !important;
+            }
+            .problem-card {
+                border: none !important;
+                border-bottom: 1px dashed #ccc !important;
+                padding-bottom: 1.5rem !important;
+                margin-bottom: 1.5rem !important;
+                page-break-inside: avoid;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+            /* Ocultar respuestas al imprimir por defecto si el usuario lo desea */
+            .print-no-answers .solution-box {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- CABECERA DEL COLEGIO (Visible en pantalla y muy destacada en impresión) -->
+    <header class="bg-white border-b border-slate-200 py-6 px-4 md:px-8 shadow-sm">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-600 text-white p-3 rounded-xl print:bg-transparent print:text-black">
+                    <i data-lucide="calculator" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-950">CEIP Servando Camúñez</h1>
+                    <p class="text-sm text-slate-500 font-medium">Departamento de Matemáticas · 3.º Ciclo de Primaria (5.º y 6.º)</p>
+                </div>
+            </div>
+            <div class="text-right text-xs md:text-sm text-slate-500 print:text-black flex flex-col gap-1 items-end">
+                <span class="font-semibold">Ficha de Resolución de Problemas</span>
+                <div class="flex gap-4 mt-1 print:flex">
+                    <span class="border-b border-slate-300 w-24 inline-block text-left text-slate-400">Alumno/a:</span>
+                    <span class="border-b border-slate-300 w-16 inline-block text-left text-slate-400">Fecha:</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- PANEL DE CONTROL / AJUSTES (Oculto al imprimir) -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 md:p-8">
+        <section class="no-print bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8 transition-all hover:shadow-md">
+            <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <i data-lucide="sliders" class="text-blue-600 w-5 h-5"></i>
+                Panel de Configuración del Generador
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Tipo de datos -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo de Números</label>
+                    <select id="number-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="integers">Solo números enteros (Sencillo)</option>
+                        <option value="decimals" selected>Números decimales (Adecuado 5º/6º)</option>
+                        <option value="mixed">Combinados (Enteros y Decimales)</option>
+                    </select>
+                </div>
+
+                <!-- Enfoque de las preguntas de Cambio -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Preguntar por...</label>
+                    <select id="focus-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="all" selected>Cualquiera (Inicial, Cambio o Final)</option>
+                        <option value="final">Cantidad Final (Cambio 1 y 2)</option>
+                        <option value="transformation">La Transformación / Cambio (Cambio 3 y 4)</option>
+                        <option value="initial">Cantidad Inicial (Cambio 5 y 6)</option>
+                    </select>
+                </div>
+
+                <!-- Opciones de visualización -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Respuestas / Soluciones</label>
+                    <div class="flex gap-4 mt-2">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="show-solutions" class="sr-only peer" checked onchange="toggleSolutionsVisibility()">
+                            <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span class="ms-3 text-sm font-medium text-slate-700">Mostrar soluciones</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="mt-6 pt-6 border-t border-slate-100 flex flex-wrap gap-4 justify-between items-center">
+                <button onclick="generateProblems()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Generar 10 Problemas Nuevos
+                </button>
+                
+                <div class="flex gap-2">
+                    <button onclick="printSheet(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 text-sm">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        Imprimir SIN Soluciones
+                    </button>
+                    <button onclick="printSheet(true)" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 text-sm">
+                        <i data-lucide="printer-check" class="w-4 h-4 text-emerald-600"></i>
+                        Imprimir CON Soluciones
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN DE PROBLEMAS -->
+        <div id="problems-container" class="space-y-6">
+            <!-- Los problemas se inyectan dinámicamente aquí -->
+        </div>
+
+        <!-- NOTA PEDAGÓGICA (Oculta al imprimir) -->
+        <footer class="no-print mt-12 bg-slate-100 rounded-xl p-5 border border-slate-200 text-xs text-slate-600 space-y-2">
+            <p class="font-bold text-slate-800 text-sm">💡 Nota Pedagógica para el Aula:</p>
+            <p>Este generador produce problemas aditivos de <strong>Cambio (CA)</strong>, clasificados según los esquemas clásicos de Vergnaud:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>Cantidad Final Desconocida (CA1/CA2):</strong> Se conoce el estado inicial y la transformación (+ o -). Se busca el final.</li>
+                <li><strong>Transformación Desconocida (CA3/CA4):</strong> Se conoce el estado inicial y el final. Se busca el tamaño del cambio.</li>
+                <li><strong>Cantidad Inicial Desconocida (CA5/CA6):</strong> Se conoce la transformación y el estado final. Se busca el punto de partida.</li>
+            </ul>
+            <p class="pt-1">Los contextos cambian dinámicamente en cada petición para mantener el interés del alumnado (mascotas, dinero, colecciones, distancias, etc.).</p>
+        </footer>
+    </main>
+
+    <script>
+        // Banco de contextos con plantillas dinámicas según el tipo de cambio y naturaleza del problema
+        // Estructuras:
+        // final_add: suma buscando final (Cambio 1)
+        // final_sub: resta buscando final (Cambio 2)
+        // trans_add: suma buscando cambio (Cambio 3)
+        // trans_sub: resta buscando cambio (Cambio 4)
+        // init_add: suma buscando inicial (Cambio 5)
+        // init_sub: resta buscando inicial (Cambio 6)
+        const contexts = [
+            {
+                subject: "Lucía",
+                item: "cromos de fútbol",
+                verb_add: "consigue",
+                verb_sub: "pierde o regala",
+                unit: "cromos"
+            },
+            {
+                subject: "El huerto escolar",
+                item: "lechugas plantadas",
+                verb_add: "se plantan de más",
+                verb_sub: "se estropean por el frío",
+                unit: "lechugas"
+            },
+            {
+                subject: "La hucha de Carlos",
+                item: "euros ahorrados",
+                verb_add: "mete",
+                verb_sub: "gasta para comprar un libro",
+                unit: "euros"
+            },
+            {
+                subject: "El autobús escolar",
+                item: "alumnos a bordo",
+                verb_add: "suben en la parada del ayuntamiento",
+                verb_sub: "bajan en la parada de la plaza",
+                unit: "alumnos"
+            },
+            {
+                subject: "La biblioteca del aula",
+                item: "libros de aventuras",
+                verb_add: "recibe como donación",
+                verb_sub: "presta al alumnado",
+                unit: "libros"
+            },
+            {
+                subject: "La panadería del barrio",
+                item: "barras de pan por la mañana",
+                verb_add: "hornea una nueva tanda de",
+                verb_sub: "vende",
+                unit: "barras de pan"
+            },
+            {
+                subject: "Mateo",
+                item: "metros recorridos en su carrera",
+                verb_add: "avanza",
+                verb_sub: "retrocede por equivocarse de camino",
+                unit: "metros"
+            },
+            {
+                subject: "El depósito de agua",
+                item: "litros de agua acumulados",
+                verb_add: "recoge con la lluvia",
+                verb_sub: "pierde por una fuga",
+                unit: "litros"
+            },
+            {
+                subject: "La tienda de informática",
+                item: "tabletas en el almacén",
+                verb_add: "recibe en un envío",
+                verb_sub: "vende en una mañana",
+                unit: "tabletas"
+            },
+            {
+                subject: "El equipo de atletismo",
+                item: "kilómetros semanales acumulados",
+                verb_add: "entrena y suma",
+                verb_sub: "reduce de su entrenamiento",
+                unit: "kilómetros"
+            }
+        ];
+
+        // Función para redondear correctamente decimales
+        function roundVal(value) {
+            return Math.round(value * 100) / 100;
+        }
+
+        // Generador de números aleatorios coherentes
+        function generateNumbers(type, operationType) {
+            let initial, change, final;
+            const isDecimal = type === 'decimals' || (type === 'mixed' && Math.random() > 0.5);
+
+            if (isDecimal) {
+                if (operationType === 'add') {
+                    initial = roundVal(Math.random() * 150 + 20);
+                    change = roundVal(Math.random() * 80 + 5);
+                    final = roundVal(initial + change);
+                } else {
+                    initial = roundVal(Math.random() * 200 + 100);
+                    change = roundVal(Math.random() * 80 + 5);
+                    final = roundVal(initial - change);
+                }
+            } else {
+                if (operationType === 'add') {
+                    initial = Math.floor(Math.random() * 150 + 20);
+                    change = Math.floor(Math.random() * 80 + 5);
+                    final = initial + change;
+                } else {
+                    initial = Math.floor(Math.random() * 200 + 100);
+                    change = Math.floor(Math.random() * 80 + 5);
+                    final = initial - change;
+                }
+            }
+
+            return { initial, change, final };
+        }
+
+        // Construcción de la narrativa del problema según el tipo de cambio
+        function createProblemText(context, nums, typeOfChange) {
+            let question = "";
+            let contextText = "";
+            let explanation = "";
+
+            switch (typeOfChange) {
+                case "CA1": // FINAL DESCONOCIDA (Añadir)
+                    contextText = `${context.subject} tenía inicialmente ${nums.initial} ${context.item}. Después, ${context.verb_add} ${nums.change} ${context.unit} más.`;
+                    question = `¿Cuántos ${context.unit} tiene ahora en total?`;
+                    explanation = `Operación básica de adición (Cantidad final desconocida). Se calcula sumando la cantidad inicial y el cambio: ${nums.initial} + ${nums.change} = ${nums.final} ${context.unit}.`;
+                    break;
+
+                case "CA2": // FINAL DESCONOCIDA (Quitar)
+                    contextText = `${context.subject} tenía inicialmente ${nums.initial} ${context.item}. Poco después, ${context.verb_sub} ${nums.change} ${context.unit}.`;
+                    question = `¿Cuántos ${context.unit} le quedan en la actualidad?`;
+                    explanation = `Operación básica de sustracción (Cantidad final desconocida). Se calcula restando el cambio de la cantidad inicial: ${nums.initial} - ${nums.change} = ${nums.final} ${context.unit}.`;
+                    break;
+
+                case "CA3": // TRANSFORMACIÓN DESCONOCIDA (Añadir)
+                    contextText = `${context.subject} tenía al principio ${nums.initial} ${context.item}. Tras realizar un recuento al final del día, se observa que ahora tiene ${nums.final} ${context.unit}.`;
+                    question = `¿Cuántos ${context.unit} ha añadido o conseguido exactamente?`;
+                    explanation = `Sustracción para hallar el cambio (Transformación desconocida creciente). Se calcula restando la cantidad inicial de la final: ${nums.final} - ${nums.initial} = ${nums.change} ${context.unit}.`;
+                    break;
+
+                case "CA4": // TRANSFORMACIÓN DESCONOCIDA (Quitar)
+                    contextText = `${context.subject} tenía al principio ${nums.initial} ${context.item}. Tras un control posterior, se comprueba que le quedan exactamente ${nums.final} ${context.unit}.`;
+                    question = `¿Cuántos ${context.unit} ha perdido, gastado o quitado en el proceso?`;
+                    explanation = `Sustracción para hallar el cambio (Transformación desconocida decreciente). Se calcula restando la cantidad final de la inicial: ${nums.initial} - ${nums.final} = ${nums.change} ${context.unit}.`;
+                    break;
+
+                case "CA5": // INICIAL DESCONOCIDA (Añadir)
+                    contextText = `${context.subject} tenía un grupo de ${context.item}. Tras ${context.verb_add} ${nums.change} ${context.unit} adicionales, ahora cuenta con un total de ${nums.final} ${context.unit}.`;
+                    question = `¿Cuántos ${context.unit} tenía al principio, antes de esta aportación?`;
+                    explanation = `Sustracción para hallar el origen (Cantidad inicial desconocida con cambio creciente). Se calcula restando el aumento de la cantidad final: ${nums.final} - ${nums.change} = ${nums.initial} ${context.unit}.`;
+                    break;
+
+                case "CA6": // INICIAL DESCONOCIDA (Quitar)
+                    contextText = `${context.subject} tenía cierta cantidad de ${context.item}. Después de que ${context.verb_sub} ${nums.change} ${context.unit}, comprueba que aún le quedan ${nums.final} ${context.unit}.`;
+                    question = `¿De cuántos ${context.unit} disponía inicialmente antes de la reducción?`;
+                    explanation = `Adición para hallar el origen (Cantidad inicial desconocida con cambio decreciente). Se calcula sumando la cantidad final y la pérdida: ${nums.final} + ${nums.change} = ${nums.initial} ${context.unit}.`;
+                    break;
+            }
+
+            return { contextText, question, explanation };
+        }
+
+        // Función principal para generar los 10 problemas
+        function generateProblems() {
+            const numberType = document.getElementById("number-type").value;
+            const focusType = document.getElementById("focus-type").value;
+            const container = document.getElementById("problems-container");
+            
+            container.innerHTML = ""; // Limpiar contenedor
+
+            // Determinar qué tipos de cambio se pueden utilizar
+            let allowedTypes = [];
+            if (focusType === "all") {
+                allowedTypes = ["CA1", "CA2", "CA3", "CA4", "CA5", "CA6"];
+            } else if (focusType === "final") {
+                allowedTypes = ["CA1", "CA2"];
+            } else if (focusType === "transformation") {
+                allowedTypes = ["CA3", "CA4"];
+            } else if (focusType === "initial") {
+                allowedTypes = ["CA5", "CA6"];
+            }
+
+            // Barajar los contextos de manera aleatoria para que no se repitan de forma consecutiva
+            const shuffledContexts = [...contexts].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 10; i++) {
+                // Seleccionar un contexto (reutilizar si es necesario, aunque hay suficientes)
+                const context = shuffledContexts[i % shuffledContexts.length];
+                
+                // Seleccionar aleatoriamente un tipo de cambio de los permitidos
+                const typeOfChange = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
+                
+                // Determinar si la operación base es de añadir o quitar
+                const isAdd = ["CA1", "CA3", "CA5"].includes(typeOfChange);
+                const operationType = isAdd ? 'add' : 'sub';
+
+                // Generar valores numéricos coherentes
+                const nums = generateNumbers(numberType, operationType);
+
+                // Obtener textos adaptados
+                const problemData = createProblemText(context, nums, typeOfChange);
+
+                // Crear elemento HTML para la tarjeta del problema
+                const problemCard = document.createElement("div");
+                problemCard.className = "problem-card bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:border-blue-200 hover:shadow-md";
+                
+                // Determinar el resultado esperado según el tipo de problema
+                let finalAnswer = "";
+                if (["CA1", "CA2"].includes(typeOfChange)) {
+                    finalAnswer = `${nums.final} ${context.unit}`;
+                } else if (["CA3", "CA4"].includes(typeOfChange)) {
+                    finalAnswer = `${nums.change} ${context.unit}`;
+                } else {
+                    finalAnswer = `${nums.initial} ${context.unit}`;
+                }
+
+                problemCard.innerHTML = `
+                    <div class="flex items-start justify-between gap-4 mb-3">
+                        <span class="bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-lg text-sm print:border print:border-black print:bg-transparent print:text-black">
+                            Problema ${i + 1}
+                        </span>
+                        <span class="no-print text-xs text-slate-400 font-mono bg-slate-100 py-1 px-2 rounded">
+                            Tipo: ${typeOfChange}
+                        </span>
+                    </div>
+                    <p class="text-slate-800 text-base leading-relaxed font-normal mb-3">
+                        ${problemData.contextText} <strong class="text-slate-950 font-semibold">${problemData.question}</strong>
+                    </p>
+                    
+                    <!-- Espacio en blanco pautado para la resolución manual del alumnado en impresión -->
+                    <div class="hidden print:block border border-slate-300 rounded-lg h-24 my-4 relative">
+                        <span class="absolute top-1 left-2 text-[10px] text-slate-400">Operaciones / Razonamiento:</span>
+                        <span class="absolute bottom-1 right-2 text-[10px] text-slate-400">Solución: ______________________</span>
+                    </div>
+
+                    <!-- Caja de solución interactiva en pantalla -->
+                    <div class="solution-box mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-950 text-sm transition-all space-y-1">
+                        <p class="font-bold flex items-center gap-1">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                            Solución: ${finalAnswer}
+                        </p>
+                        <p class="text-xs text-emerald-800 font-light leading-relaxed">
+                            <strong>Razonamiento:</strong> ${problemData.explanation}
+                        </p>
+                    </div>
+                `;
+
+                container.appendChild(problemCard);
+            }
+
+            // Inicializar de nuevo iconos en los elementos nuevos
+            lucide.createIcons();
+            
+            // Ajustar visualización según el estado actual del checkbox de soluciones
+            toggleSolutionsVisibility();
+        }
+
+        // Controlar visibilidad de las soluciones
+        function toggleSolutionsVisibility() {
+            const show = document.getElementById("show-solutions").checked;
+            const solutions = document.querySelectorAll(".solution-box");
+            solutions.forEach(box => {
+                if (show) {
+                    box.classList.remove("hidden");
+                } else {
+                    box.classList.add("hidden");
+                }
+            });
+        }
+
+        // Acción de impresión personalizada
+        function printSheet(includeAnswers) {
+            const body = document.body;
+            if (includeAnswers) {
+                body.classList.remove("print-no-answers");
+            } else {
+                body.classList.add("print-no-answers");
+            }
+            window.print();
+        }
+
+        // Inicializar por primera vez al cargar la página
+        window.onload = function() {
+            generateProblems();
+        }
+    </script>
+</body>
+</html>
